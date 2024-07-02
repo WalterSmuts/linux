@@ -879,6 +879,7 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	page_alloc_init();
 
 	pr_notice("Kernel command line: %s\n", saved_command_line);
+	pr_notice("WALLIE: version 0");
 	/* parameters may set static keys */
 	jump_label_init();
 	parse_early_param();
