@@ -1398,6 +1398,8 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
 	return true;
 }
 
+#define MAP_UNINITIALIZED 0x4000000
+
 /*
  * The caller must write-lock current->mm->mmap_lock.
  */
@@ -1580,7 +1582,11 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 			vm_flags |= VM_NORESERVE;
 	}
 
-	addr = mmap_region(file, addr, len, vm_flags, pgoff, uf);
+	if (flags & MAP_UNINITIALIZED) {
+		addr = mmap_region(file, addr, len, vm_flags, pgoff, uf, true);
+	} else {
+		addr = mmap_region(file, addr, len, vm_flags, pgoff, uf, false);
+	}
 	if (!IS_ERR_VALUE(addr) &&
 	    ((vm_flags & VM_LOCKED) ||
 	     (flags & (MAP_POPULATE | MAP_NONBLOCK)) == MAP_POPULATE))
@@ -1729,7 +1735,7 @@ static inline int accountable_mapping(struct file *file, vm_flags_t vm_flags)
 
 unsigned long mmap_region(struct file *file, unsigned long addr,
 		unsigned long len, vm_flags_t vm_flags, unsigned long pgoff,
-		struct list_head *uf)
+		struct list_head *uf, bool allow_uninit)
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma, *prev, *merge;
@@ -1789,6 +1795,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
 	vma->vm_flags = vm_flags;
 	vma->vm_page_prot = vm_get_page_prot(vm_flags);
 	vma->vm_pgoff = pgoff;
+	vma->allow_uninit = allow_uninit;
 
 	if (file) {
 		if (vm_flags & VM_DENYWRITE) {

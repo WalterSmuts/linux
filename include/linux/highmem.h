@@ -275,7 +275,7 @@ static inline struct page *
 alloc_zeroed_user_highpage_movable(struct vm_area_struct *vma,
 					unsigned long vaddr)
 {
-	if (vma->vm_flags & MAP_UNINITIALIZED) {
+	if (vma->allow_uninit) {
 		printk("WALLIE: Mapping without zero\n");
 		return alloc_page_vma(GFP_HIGHUSER | __GFP_MOVABLE,
 			vma, vaddr);
